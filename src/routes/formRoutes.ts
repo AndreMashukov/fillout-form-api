@@ -12,7 +12,7 @@ const parseFilterParam = (filterParams: string) => {
     return JSON.parse(parsed) as IFilterClause[];
   } catch (error) {
     console.error(error);
-    throw new Error("Invalid filters parameter");
+    return null
   }
 };
 
@@ -22,15 +22,18 @@ router.get(
     const { formId } = req.params;
     const { filters, limit, offset } = req.query;
     try {
-      const filtersArray: IFilterClause[] = parseFilterParam(filters as string);
+      const filtersArray: IFilterClause[] | null = parseFilterParam(filters as string);
       const data: IFormResponses = await services.getFilloutData({
         formId,
         limit: parseInt((limit as string) || "150"),
         offset: parseInt((offset as string) || "0"),
       });
+      if (!filtersArray) {
+        return res.json(data);
+      }
       const filteredResponse = filterResponse({ data, filters: filtersArray });
       return res.json(filteredResponse);
-      // return res.json(data);
+      
     } catch (error) {
       console.log(error);
       return res
